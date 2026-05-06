@@ -1,7 +1,7 @@
 #include "ClientStruct.h"
 #include <time.h>
 #include <arpa/inet.h>
-#include "HelloCheak.h"
+#include "HelloCheck.h"
 
 void Connect(ClientSocket* client, int epfd);
 
