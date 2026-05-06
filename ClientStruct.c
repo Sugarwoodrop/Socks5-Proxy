@@ -98,7 +98,7 @@ ClientSocket** addClient(ClientSocket** clients, int client, int epfd, int NewSi
     return clients;
 }
 
-ClientSocket** DeliteClient(ClientSocket** clients, int numberClient, int epfd, int* SizeClients)
+ClientSocket** DeleteClient(ClientSocket** clients, int numberClient, int epfd, int* SizeClients)
 {
     int lastIndex = *SizeClients - 1;
 
