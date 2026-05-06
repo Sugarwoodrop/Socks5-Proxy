@@ -150,7 +150,7 @@ ClientSocket* InitClientSocket(int client, int epfd);
 
 ClientSocket** addClient(ClientSocket** clients, int client, int epfd, int NewSizeClients);
 
-ClientSocket** DeliteClient(ClientSocket** clients, int numberClient, int epfd, int* SizeClients);
+ClientSocket** DeleteClient(ClientSocket** clients, int numberClient, int epfd, int* SizeClients);
 
 int SearchClient(ClientSocket** clients, int client, int sizeClients);
 
