@@ -65,7 +65,7 @@ int StartUserVerification(ClientSocket* client){
 
 int HelloReply(ClientSocket* client, int epfd){
         if(client->helloContext.replyState == H_REPLY_VER){
-            int error = SendOneBait(client, &client->helloContext.VER);
+            int error = SendOneByte(client, &client->helloContext.VER);
             if(error == 2){
                 client->helloContext.replyState = H_REPLY_METHODS;
             }
@@ -74,7 +74,7 @@ int HelloReply(ClientSocket* client, int epfd){
             }
         }
         if(client->helloContext.replyState == H_REPLY_METHODS){
-            int error = SendOneBait(client, &client->helloContext.Methods);
+            int error = SendOneByte(client, &client->helloContext.Methods);
             if(error == 2){
                 client->helloContext.replyState = H_DONEREPLY;
             }
