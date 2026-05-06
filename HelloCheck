@@ -1,8 +1,8 @@
-#include "HelloCheak.h"
+#include "HelloCheck.h"
 
 int StartUserVerification(ClientSocket* client){
         if(client->helloContext.state == H_READ_VER){
-            int error = RecvOneBait(client, &client->helloContext.VER);
+            int error = RecvOneByte(client, &client->helloContext.VER);
             if(error == 2){
                 client->helloContext.state = H_READ_NM;
                 if(client->helloContext.VER != 0x05){
@@ -14,7 +14,7 @@ int StartUserVerification(ClientSocket* client){
             }
         }
         if(client->helloContext.state == H_READ_NM){
-            int error = RecvOneBait(client, &client->helloContext.NumberMethods) ;
+            int error = RecvOneByte(client, &client->helloContext.NumberMethods) ;
             if(error == 2){
                 client->helloContext.state = H_READ_METHODS;
             }
