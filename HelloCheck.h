@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "ClientStruct.h"
-#include "SendRecvOneBait.h"
+#include "SendRecvOneByte.h"
 
 #define ERROR -1
 #define SUCCES 0
