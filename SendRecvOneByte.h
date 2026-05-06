@@ -13,5 +13,5 @@
 #define ERROR -1
 #define SUCCES 0
 
-int RecvOneBait(ClientSocket* client, uint8_t* writeIn);
-int SendOneBait(ClientSocket* client, uint8_t* sendBait);
+int RecvOneByte(ClientSocket* client, uint8_t* writeIn);
+int SendOneByte(ClientSocket* client, uint8_t* sendByte);
