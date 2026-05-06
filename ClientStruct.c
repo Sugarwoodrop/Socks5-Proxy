@@ -17,15 +17,18 @@ ClientSocket* InitClientSocket(int client, int epfd){
     memset(c, 0, sizeof(ClientSocket));
     c->socket = client;
     c->socketEndPoint = socket(AF_INET, SOCK_STREAM, 0);
-    error = fcntl(c->socketEndPoint, F_SETFL, O_NONBLOCK);
-     if (error == ERROR) {
-        perror("fcntl:InitClientSocket");
-        close(client);
+    if (c->socketEndPoint != ERROR) {
+        error = fcntl(c->socketEndPoint, F_SETFL, O_NONBLOCK);
+        if (error == ERROR) {
+            perror("fcntl:InitClientSocket(endpoint)");
+            close(c->socketEndPoint);
+            c->socketEndPoint = ERROR;
+        }
     }
     if(c->socketEndPoint != ERROR){
         struct epoll_event epevEndSocket;
         epevEndSocket.events = 0;
-        epevEndSocket.data.fd = client;
+        epevEndSocket.data.fd = c->socketEndPoint;
         error = epoll_ctl(epfd, EPOLL_CTL_ADD, c->socketEndPoint, (struct epoll_event*)&epevEndSocket);
     }
     c->eventsClient = EPOLLIN;
@@ -40,7 +43,7 @@ ClientSocket* InitClientSocket(int client, int epfd){
     c->helloContext.VER = 0;
     c->helloContext.NumberMethods = 0;
     c->helloContext.Methods = 0xFF;    
-    c->helloContext.readSizeMerhods = 0;
+    c->helloContext.readSizeMethods = 0;
 
 
     c->settingContext.stateClientRequest = R_READ_VER;
@@ -51,21 +54,21 @@ ClientSocket* InitClientSocket(int client, int epfd){
     c->settingContext.RSV = 0;
 
     c->settingContext.DSTPORT = 0;
-    c->settingContext.portBait[0] = 0;
-    c->settingContext.portBait[1] = 0;
-    c->settingContext.sizeReadPortBait = 0;
+    c->settingContext.portByte[0] = 0;
+    c->settingContext.portByte[1] = 0;
+    c->settingContext.sizeReadPortByte = 0;
 
     c->settingContext.connectPort = 0;
-    c->settingContext.connectPortBait[0] = 0;
-    c->settingContext.connectPortBait[1] = 0;
-    c->settingContext.sizeReplyPortBait = 0;
+    c->settingContext.connectPortByte[0] = 0;
+    c->settingContext.connectPortByte[1] = 0;
+    c->settingContext.sizeReplyPortByte = 0;
 
     c->settingContext.returnStatus = 0x01; 
 
     AddressSocks5* a = &c->settingContext.addr;
 
     a->StateReadAddr  = A_READ_TYPE;
-    a->StateReplyAddr = A_REPLAY_TYPE;
+    a->StateReplyAddr = A_REPLY_TYPE;
     a->StateIPv4      = WAIT;
 
     a->TYPE = 0;
@@ -77,23 +80,23 @@ ClientSocket* InitClientSocket(int client, int epfd){
     a->lengthReadDomainName = 0;
     memset(a->domainName, 0, 255);
 
-    memset(a->ReplayIPv4, 0, 4);
-    a->lengthReplayIP = 0;
+    memset(a->ReplyIPv4, 0, 4);
+    a->lengthReplyIP = 0;
 
 
     c->IdDNS[0] = 0;
     c->IdDNS[1] = 0;
 
-    memset(c->bufForClietn, 0 , 512);
+    memset(c->bufForClient, 0 , 512);
     memset(c->bufForEndPoint, 0, 512);
-    c->sizeBufForClietn = 0;
+    c->sizeBufForClient = 0;
     c->sizeBufForEndPoint = 0;
     c->last_activity = time(NULL);
     return c;
 }
 
 ClientSocket** addClient(ClientSocket** clients, int client, int epfd, int NewSizeClients){
-    clients = realloc(clients, sizeof(ClientSocket*)*NewSizeClients);
+    /* Ёмкостью буфера управляет вызывающая сторона (main). */
     clients[NewSizeClients-1] = InitClientSocket(client, epfd);
     return clients;
 }
@@ -122,12 +125,8 @@ ClientSocket** DeleteClient(ClientSocket** clients, int numberClient, int epfd, 
 
     (*SizeClients)--;
 
-    if (*SizeClients == 0) {
-        free(clients);
-        return NULL;
-    }
-
-    clients = realloc(clients, sizeof(ClientSocket*) * (*SizeClients));
+    /* Ёмкость буфера не уменьшаем — это работа main (буфер всё равно
+       освобождается при завершении программы). */
     return clients;
 }
 

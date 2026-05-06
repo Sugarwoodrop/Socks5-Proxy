@@ -1,14 +1,14 @@
-#include "Tunel.h"
+#include "Tunnel.h"
 
-int TunelSend(ClientSocket* client, int fd, int epfd){
+int TunnelSend(ClientSocket* client, int fd, int epfd){
     uint8_t* buf;
     int* len = NULL;
     uint32_t* firstEv;
     uint32_t* secondEv;
     int secondFd;
     if(client->socket == fd){
-        buf = client->bufForClietn;
-        len = &client->sizeBufForClietn;
+        buf = client->bufForClient;
+        len = &client->sizeBufForClient;
         secondEv = &client->eventsEndPoint;
         firstEv = &client->eventsClient;
         secondFd = client->socketEndPoint;
@@ -23,18 +23,17 @@ int TunelSend(ClientSocket* client, int fd, int epfd){
 
     int size  = send(fd, buf, *len, 0);
     if (size < 0 && errno == EAGAIN){
-        return SUCCES;
+        return SUCCESS;
     }
     if(size < 0 && errno == EINPROGRESS){
-        return SUCCES;
+        return SUCCESS;
     }
     if (size <= 0){
-        perror("send TUNEL\n");
+        perror("send TUNNEL\n");
         return ERROR;
     }
-    for(int i = 0; i < 512-size; i++){
-        buf[i] = buf[i+size];
-    }
+    /* Сдвигаем непрочитанный хвост буфера к началу. */
+    memmove(buf, buf + size, *len - size);
     *len -= size;
     if(*len == 0){
         *firstEv &= ~EPOLLOUT; 
@@ -42,10 +41,10 @@ int TunelSend(ClientSocket* client, int fd, int epfd){
     *secondEv |= EPOLLIN;
     modify_epoll_events(epfd, fd, *firstEv);
     modify_epoll_events(epfd, secondFd, *secondEv);
-    return SUCCES;
+    return SUCCESS;
 }
 
-int TunelRecv(ClientSocket* client, int fd, int epfd){
+int TunnelRecv(ClientSocket* client, int fd, int epfd){
     uint8_t buf[512];
     memset(buf, 0, 512);
     uint8_t *secondBuf;
@@ -56,9 +55,9 @@ int TunelRecv(ClientSocket* client, int fd, int epfd){
     uint32_t* secondEv;
 
     if(client->socketEndPoint == fd){
-        secondBuf = client->bufForClietn;
-        len -= client->sizeBufForClietn;
-        secondLen = &client->sizeBufForClietn;
+        secondBuf = client->bufForClient;
+        len -= client->sizeBufForClient;
+        secondLen = &client->sizeBufForClient;
         secondFd = client->socket;
         firstEv = &client->eventsEndPoint;
         secondEv = &client->eventsClient;
@@ -74,10 +73,10 @@ int TunelRecv(ClientSocket* client, int fd, int epfd){
 
     int size  = recv(fd, buf, len, 0);
     if (size < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)){
-        return SUCCES;
+        return SUCCESS;
     }
     if (size < 0){
-        printf("TunelRecv(fd=%d) state=%d eventsClient=%X eventsEndPoint=%X errno_before=%d\n",
+        printf("TunnelRecv(fd=%d) state=%d eventsClient=%X eventsEndPoint=%X errno_before=%d\n",
        fd, client->statConnect, client->eventsClient, client->eventsEndPoint, errno);
         return ERROR;
     }
@@ -95,5 +94,5 @@ int TunelRecv(ClientSocket* client, int fd, int epfd){
         *firstEv &= ~EPOLLIN;
         modify_epoll_events(epfd, fd, *firstEv);
     }
-    return SUCCES;
+    return SUCCESS;
 }

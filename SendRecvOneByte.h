@@ -1,3 +1,6 @@
+#ifndef SEND_RECV_ONE_BYTE_H
+#define SEND_RECV_ONE_BYTE_H
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <sys/socket.h>
@@ -11,7 +14,9 @@
 #include "ClientStruct.h"
 
 #define ERROR -1
-#define SUCCES 0
+#define SUCCESS 0
 
 int RecvOneByte(ClientSocket* client, uint8_t* writeIn);
 int SendOneByte(ClientSocket* client, uint8_t* sendByte);
+
+#endif

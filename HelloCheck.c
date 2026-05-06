@@ -46,12 +46,12 @@ int StartUserVerification(ClientSocket* client){
                 }
             }
 
-            client->helloContext.readSizeMerhods += data_obtained; 
-            if(client->helloContext.readSizeMerhods == client->helloContext.NumberMethods && client->helloContext.Methods != 0){
+            client->helloContext.readSizeMethods += data_obtained; 
+            if(client->helloContext.readSizeMethods == client->helloContext.NumberMethods && client->helloContext.Methods != 0){
                 printf("Не поддерживается по форматам");
                 client->helloContext.Methods = 0xFF;
             }
-            if(client->helloContext.readSizeMerhods == client->helloContext.NumberMethods){
+            if(client->helloContext.readSizeMethods == client->helloContext.NumberMethods){
                 client->helloContext.state = H_DONE;
             }
             free(buf_options);
@@ -60,7 +60,7 @@ int StartUserVerification(ClientSocket* client){
             printf("SOCKET %u\nNM %u\nM %u\n\n", client->helloContext.VER, client->helloContext.NumberMethods, client->helloContext.Methods);
             return 2;
         }
-        return SUCCES;
+        return SUCCESS;
     }
 
 int HelloReply(ClientSocket* client, int epfd){

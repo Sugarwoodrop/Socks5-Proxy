@@ -1,3 +1,6 @@
+#ifndef CONNECT_SERVER_H
+#define CONNECT_SERVER_H
+
 #include "ClientStruct.h"
 #include <time.h>
 #include <arpa/inet.h>
@@ -14,3 +17,4 @@ int CreateDNSpacket(uint8_t* buf, ClientSocket* client);
 int encode_dns_name(uint8_t *buf,  uint8_t *domain);
 
 int RecvDNS(int udpSock, ClientSocket** clients, int sizeClients);
+#endif

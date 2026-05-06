@@ -18,7 +18,7 @@
 #define METHODS_UNSET 0xFF
 
 #define ERROR -1
-#define SUCCES 0
+#define SUCCESS 0
 
 typedef enum {
     C_NOT,
@@ -35,8 +35,8 @@ typedef enum {
 }StateReadAddr;
 
 typedef enum {
-    A_REPLAY_TYPE,
-    A_REPLAY_IPv4,
+    A_REPLY_TYPE,
+    A_REPLY_IPv4,
     A_RDONE
 }StateReplyAddr;
 
@@ -58,8 +58,8 @@ typedef struct SocksSettings
     uint8_t domainName[255];
     uint8_t lengthReadDomainName;
     
-    uint8_t ReplayIPv4[4];
-    uint8_t lengthReplayIP;
+    uint8_t ReplyIPv4[4];
+    uint8_t lengthReplyIP;
     
 }AddressSocks5;
 
@@ -82,7 +82,7 @@ typedef struct HelloContext{
     uint8_t VER;
     uint8_t NumberMethods;
     uint8_t Methods;
-    int readSizeMerhods;
+    int readSizeMethods;
 }HelloContext;
 
 typedef enum {
@@ -113,12 +113,12 @@ typedef struct SettingContext
     AddressSocks5 addr;
 
     uint16_t DSTPORT; 
-    uint8_t portBait[2];
-    uint8_t sizeReadPortBait; 
+    uint8_t portByte[2];
+    uint8_t sizeReadPortByte; 
     
     uint8_t connectPort;
-    uint8_t connectPortBait[2];
-    uint8_t sizeReplyPortBait; 
+    uint8_t connectPortByte[2];
+    uint8_t sizeReplyPortByte; 
 
     uint8_t returnStatus;
 
@@ -138,9 +138,9 @@ typedef struct ClientSocket
     uint8_t IdDNS[2];
     StatConnect statConnect;
 
-    uint8_t bufForClietn[512];
+    uint8_t bufForClient[512];
     uint8_t bufForEndPoint[512];
-    int sizeBufForClietn;
+    int sizeBufForClient;
     int sizeBufForEndPoint;
 
     time_t last_activity;

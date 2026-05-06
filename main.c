@@ -13,17 +13,17 @@
 #include <sys/types.h>
 #include "SocksSettings.h"
 #include "ConnectServer.h"
-#include "Tunel.h"
+#include "Tunnel.h"
 
 #define EVENTS_SIZE 128
 #define BACKLOG 128
 #define SOCKET_PORT 1080
 #define ERROR -1
-#define SUCCES 0
+#define SUCCESS 0
 #define ERROR_EXIT 1
 #define CLIENT_TIMEOUT 60
 
-volatile sig_atomic_t stateWork = SUCCES;
+volatile sig_atomic_t stateWork = SUCCESS;
 
 int initSock(){
     int socket_stream;
@@ -148,7 +148,7 @@ int main() {
     while(true){
         if(stateWork == 1){
             for(int i = 0; i < sizeClients; i++){
-                DeliteClient(clients, i, epfd, &sizeClients);
+                DeleteClient(clients, i, epfd, &sizeClients);
             }
             printf("Перезапуск ждите 3 минуту до запуска");
             free(clients);
@@ -162,7 +162,7 @@ int main() {
         }
         else if(stateWork == 2){
             for(int i = 0; i < sizeClients; i++){
-                DeliteClient(clients, i, epfd, &sizeClients);
+                DeleteClient(clients, i, epfd, &sizeClients);
             }
             free(clients);
             close(epfd);
@@ -177,11 +177,11 @@ int main() {
         for (int i = 0; i < sizeClients; i++) {
             if (now - clients[i]->last_activity > CLIENT_TIMEOUT) {
                 printf("Client fd=%d timeout\n", clients[i]->socket);
-                DeliteClient(clients, i, epfd, &sizeClients);
+                DeleteClient(clients, i, epfd, &sizeClients);
                 i--;
             }
         }
-        int* numerDelite = malloc(n_events*sizeof(int));
+        int* numberDelete = malloc(n_events*sizeof(int));
         if (n_events == ERROR) {
             perror("epoll_wait");
             close(epfd);
@@ -191,7 +191,7 @@ int main() {
         for(int i = 0; i < n_events; i++){
             int fd = events[i].data.fd;
             uint32_t ev = events[i].events;
-            int addNumberDelite = 0;
+            int addNumberDelete = 0;
             if(fd == socket_stream){
                 int client;
                 client = accept(socket_stream, NULL, NULL);
@@ -202,16 +202,16 @@ int main() {
                     perror("accept");
                     break;
                 }
-                sizeClients++;
-                if(sizeClients <= sizeBufClients - 5){
+                if(sizeClients >= sizeBufClients - 1){
                     sizeBufClients += 300;
                     clients = realloc(clients, sizeof(ClientSocket*)*sizeBufClients);
                 }
+                sizeClients++;
                 clients = addClient(clients, client, epfd, sizeClients);
                 if(clients[sizeClients-1]->socketEndPoint == ERROR){
-                    DeliteClient(clients, sizeClients-1, epfd, &sizeClients);
-                    numerDelite[addNumberDelite] = sizeClients-1;
-                    addNumberDelite++;
+                    DeleteClient(clients, sizeClients-1, epfd, &sizeClients);
+                    numberDelete[addNumberDelete] = sizeClients-1;
+                    addNumberDelete++;
                 }
             }
             else if(fd == udpSock){
@@ -229,7 +229,7 @@ int main() {
                 }
                 bool flag = false;
                 for(int i = 0; i < n_events; i++){
-                    if(numerDelite[i] == numberClient){
+                    if(numberDelete[i] == numberClient){
                         flag = true;
                         break;
                     }
@@ -240,9 +240,9 @@ int main() {
                 if(clients[numberClient]->hello == false && clients[numberClient]->helloContext.state != H_DONE){
                     int error = StartUserVerification(clients[numberClient]);
                     if(error == ERROR){
-                        DeliteClient(clients, numberClient, epfd, &sizeClients);
-                        numerDelite[addNumberDelite] = numberClient;
-                        addNumberDelite++;
+                        DeleteClient(clients, numberClient, epfd, &sizeClients);
+                        numberDelete[addNumberDelete] = numberClient;
+                        addNumberDelete++;
                         printf("ОШИБКА В ВЕРЕФЕКАЦИИ %d\n\n", numberClient);
                     }
                     else if (error == 2) {
@@ -256,9 +256,9 @@ int main() {
                 else if(clients[numberClient]->hello == false && clients[numberClient]->helloContext.state == H_DONE){
                     int error = HelloReply(clients[numberClient], epfd);
                     if(error == ERROR){
-                        DeliteClient(clients, numberClient, epfd, &sizeClients);
-                        numerDelite[addNumberDelite] = numberClient;
-                        addNumberDelite++;
+                        DeleteClient(clients, numberClient, epfd, &sizeClients);
+                        numberDelete[addNumberDelete] = numberClient;
+                        addNumberDelete++;
                     }
                     if(error == 2){
                         clients[numberClient]->last_activity = time(NULL);
@@ -268,9 +268,9 @@ int main() {
                 if(clients[numberClient]->setting == false && clients[numberClient]->settingContext.stateClientRequest != R_DONE){
                    int error = StartSettings(clients[numberClient]);
                    if(error == ERROR){
-                    DeliteClient(clients, numberClient, epfd, &sizeClients);
-                        numerDelite[addNumberDelite] = numberClient;
-                        addNumberDelite++;
+                    DeleteClient(clients, numberClient, epfd, &sizeClients);
+                        numberDelete[addNumberDelete] = numberClient;
+                        addNumberDelete++;
                         printf("ОШИБКА ПОЛУЧЕНИЯ НАСТРОЕК %d\n\n", numberClient);
                     }
                     else if (error == 2) {
@@ -287,9 +287,9 @@ int main() {
                 else if(clients[numberClient]->setting == false && clients[numberClient]->settingContext.stateClientRequest == R_DONE){
                     if(clients[numberClient]->settingContext.addr.StateIPv4 == DONE && clients[numberClient]->statConnect == C_WAIT){
                         if (ev & (EPOLLERR|EPOLLHUP)) { 
-                            DeliteClient(clients, numberClient, epfd, &sizeClients);
-                            numerDelite[addNumberDelite] = numberClient;
-                            addNumberDelite++;
+                            DeleteClient(clients, numberClient, epfd, &sizeClients);
+                            numberDelete[addNumberDelete] = numberClient;
+                            addNumberDelete++;
                         }
                         if (ev & EPOLLOUT) {
                             FinishConnect(clients[numberClient]);
@@ -308,9 +308,9 @@ int main() {
                             continue;
                         }
                         else if(error == ERROR){
-                            DeliteClient(clients, numberClient, epfd, &sizeClients);
-                            numerDelite[addNumberDelite] = numberClient;
-                            addNumberDelite++;
+                            DeleteClient(clients, numberClient, epfd, &sizeClients);
+                            numberDelete[addNumberDelete] = numberClient;
+                            addNumberDelete++;
                             printf("ОШИБКА ОТПРАВЛЕНИЯ НАСТРОЕК %d\n\n", numberClient);
                             continue;
                         }
@@ -318,30 +318,30 @@ int main() {
                 }
                 if(clients[numberClient]->setting == true){
                     if(ev & EPOLLIN){
-                        int error = TunelRecv(clients[numberClient], fd, epfd);
-                        if(error == SUCCES){
+                        int error = TunnelRecv(clients[numberClient], fd, epfd);
+                        if(error == SUCCESS){
                             clients[numberClient]->last_activity = time(NULL);
                         }
                         else{
-                            DeliteClient(clients, numberClient, epfd, &sizeClients);
-                            numerDelite[addNumberDelite] = numberClient;
-                            addNumberDelite++; 
+                            DeleteClient(clients, numberClient, epfd, &sizeClients);
+                            numberDelete[addNumberDelete] = numberClient;
+                            addNumberDelete++; 
                         }
                     }
                     else if(ev & EPOLLOUT){
-                        int error = TunelSend(clients[numberClient], fd, epfd);
-                        if(error == SUCCES){
+                        int error = TunnelSend(clients[numberClient], fd, epfd);
+                        if(error == SUCCESS){
                             clients[numberClient]->last_activity = time(NULL);
                         }
                         else{
-                            DeliteClient(clients, numberClient, epfd, &sizeClients);
+                            DeleteClient(clients, numberClient, epfd, &sizeClients);
                         }
                     }
                     printf("КЛИЕНТОВ: %d\n", sizeClients);
                 }
             }
         }
-        free(numerDelite);
+        free(numberDelete);
     }
 
     close(udpSock);

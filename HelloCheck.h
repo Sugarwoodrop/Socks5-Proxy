@@ -1,3 +1,6 @@
+#ifndef HELLO_CHECK_H
+#define HELLO_CHECK_H
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <sys/socket.h>
@@ -12,8 +15,9 @@
 #include "SendRecvOneByte.h"
 
 #define ERROR -1
-#define SUCCES 0
+#define SUCCESS 0
 
 int StartUserVerification(ClientSocket* client);
 int HelloReply(ClientSocket* client, int epfd);
 void modify_epoll_events(int epfd, int fd, uint32_t events);
+#endif

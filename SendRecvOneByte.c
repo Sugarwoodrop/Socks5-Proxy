@@ -3,7 +3,7 @@
 int RecvOneByte(ClientSocket* client, uint8_t* writeIn){
         ssize_t data_obtained = recv(client->socket, writeIn, 1, 0);
         if (data_obtained < 0 && errno == EAGAIN){
-            return SUCCES;
+            return SUCCESS;
         }
         if (data_obtained < 0){
             perror("recv");
@@ -19,7 +19,7 @@ int RecvOneByte(ClientSocket* client, uint8_t* writeIn){
 int SendOneByte(ClientSocket* client, uint8_t* sendByte ){
         ssize_t data_obtained = send(client->socket, sendByte, 1, 0);
         if (data_obtained < 0 && errno == EAGAIN){
-            return SUCCES;
+            return SUCCESS;
         }
         if (data_obtained <= 0){
             perror("send");

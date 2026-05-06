@@ -2,7 +2,7 @@
 
 int StartSettings(ClientSocket* client){
     if(client->settingContext.stateClientRequest == R_READ_VER){
-        int error = RecvOneBait(client, &client->settingContext.VER);
+        int error = RecvOneByte(client, &client->settingContext.VER);
         if(error == 2){
             client->settingContext.stateClientRequest = R_READ_CMD;
             printf("Settings:\nVER %u\n", client->settingContext.VER);
@@ -15,7 +15,7 @@ int StartSettings(ClientSocket* client){
         }
     }
     if(client->settingContext.stateClientRequest == R_READ_CMD){
-        int error = RecvOneBait(client, &client->settingContext.CMD);
+        int error = RecvOneByte(client, &client->settingContext.CMD);
         if(error == 2){
             if(client->settingContext.CMD == 0x01){
                 client->settingContext.stateClientRequest = R_READ_RSV;
@@ -30,7 +30,7 @@ int StartSettings(ClientSocket* client){
         }
     }
     if(client->settingContext.stateClientRequest == R_READ_RSV){
-        int error = RecvOneBait(client, &client->settingContext.RSV);
+        int error = RecvOneByte(client, &client->settingContext.RSV);
         if(error == 2){
             if(client->settingContext.RSV != 0x00){
                     client->settingContext.returnStatus = 0x07;
@@ -45,7 +45,7 @@ int StartSettings(ClientSocket* client){
     }
     if(client->settingContext.stateClientRequest == R_READ_ADDR){
         if(client->settingContext.addr.StateReadAddr == A_READ_TYPE){
-            int error = RecvOneBait(client, &client->settingContext.addr.TYPE);
+            int error = RecvOneByte(client, &client->settingContext.addr.TYPE);
             if(error == 2){
                 if(client->settingContext.addr.TYPE == 0x01){
                     client->settingContext.addr.StateReadAddr = A_READ_IPv4;
@@ -62,27 +62,27 @@ int StartSettings(ClientSocket* client){
             else{
                 return error;
             }
-            return SUCCES;
+            return SUCCESS;
         }
         if(client->settingContext.addr.StateReadAddr == A_READ_IPv4){
-            int readBaite = recv(client->socket, client->settingContext.addr.IPv4 + client->settingContext.addr.lengthReadIP, 
+            int readBytee = recv(client->socket, client->settingContext.addr.IPv4 + client->settingContext.addr.lengthReadIP, 
                                             4 - client->settingContext.addr.lengthReadIP, 0);
-            if (readBaite < 0 && errno == EAGAIN){
-                return SUCCES;
+            if (readBytee < 0 && errno == EAGAIN){
+                return SUCCESS;
             }
-            if (readBaite < 0){
+            if (readBytee < 0){
                 perror("recv");
                 return ERROR;
             }
-            if (readBaite == 0){
+            if (readBytee == 0){
                 perror("recv");
                 return ERROR;
             }
-            if(readBaite > 0){
-                client->settingContext.addr.lengthReadIP += readBaite;
+            if(readBytee > 0){
+                client->settingContext.addr.lengthReadIP += readBytee;
             }
             if(client->settingContext.addr.lengthReadIP != 4){
-                return SUCCES;
+                return SUCCESS;
             }
             client->settingContext.addr.StateReadAddr = A_DONE;
             client->settingContext.addr.StateIPv4 = DONE;
@@ -94,10 +94,10 @@ int StartSettings(ClientSocket* client){
                 }
                 printf("%u.", client->settingContext.addr.IPv4[i]);
             }
-            return SUCCES;
+            return SUCCESS;
         }
         if(client->settingContext.addr.StateReadAddr == A_READ_lengthDomainName){
-            int error = RecvOneBait(client, &client->settingContext.addr.lengthDomainName);
+            int error = RecvOneByte(client, &client->settingContext.addr.lengthDomainName);
             if(error == 2){
                 client->settingContext.addr.StateReadAddr = A_READ_domainName;
                 printf("Settings: Addr:\n lengthDomainName %u\n", client->settingContext.addr.lengthDomainName);
@@ -105,27 +105,27 @@ int StartSettings(ClientSocket* client){
             else{
                 return error;
             }   
-            return SUCCES;
+            return SUCCESS;
         }
         if(client->settingContext.addr.StateReadAddr == A_READ_domainName){
-            int readBaite = recv(client->socket, client->settingContext.addr.domainName + client->settingContext.addr.lengthReadDomainName, 
+            int readBytee = recv(client->socket, client->settingContext.addr.domainName + client->settingContext.addr.lengthReadDomainName, 
                                 client->settingContext.addr.lengthDomainName - client->settingContext.addr.lengthReadDomainName, 0);
-            if (readBaite < 0 && errno == EAGAIN){
-                return SUCCES;
+            if (readBytee < 0 && errno == EAGAIN){
+                return SUCCESS;
             }
-            if (readBaite < 0){
+            if (readBytee < 0){
                 perror("recv");
                 return ERROR;
             }
-            if (readBaite == 0){
+            if (readBytee == 0){
                 perror("recv");
                 return ERROR;
             }
-            if(readBaite > 0){
-                client->settingContext.addr.lengthReadDomainName += readBaite;
+            if(readBytee > 0){
+                client->settingContext.addr.lengthReadDomainName += readBytee;
             }
             if(client->settingContext.addr.lengthReadDomainName != client->settingContext.addr.lengthDomainName){
-                return SUCCES;
+                return SUCCESS;
             }
             client->settingContext.addr.StateReadAddr = A_DONE;
             client->settingContext.addr.StateIPv4 = WAIT;
@@ -134,19 +134,19 @@ int StartSettings(ClientSocket* client){
                 printf("%c", client->settingContext.addr.domainName[i]);
             }
             printf("\n");
-            return SUCCES;
+            return SUCCESS;
         }
         if(client->settingContext.addr.StateReadAddr == A_DONE){
             client->settingContext.stateClientRequest = R_READ_DSTPORT;
-            return SUCCES;
+            return SUCCESS;
         }
     }
     if(client->settingContext.stateClientRequest == R_READ_DSTPORT){
-        int error = RecvOneBait(client, &client->settingContext.portBait[client->settingContext.sizeReadPortBait]);
+        int error = RecvOneByte(client, &client->settingContext.portByte[client->settingContext.sizeReadPortByte]);
         if(error == 2){
-            client->settingContext.sizeReadPortBait++;
-            if(client->settingContext.sizeReadPortBait == 2){
-                client->settingContext.DSTPORT = (client->settingContext.portBait[0]<<8) | (client->settingContext.portBait[1]);
+            client->settingContext.sizeReadPortByte++;
+            if(client->settingContext.sizeReadPortByte == 2){
+                client->settingContext.DSTPORT = (client->settingContext.portByte[0]<<8) | (client->settingContext.portByte[1]);
                 client->settingContext.stateClientRequest = R_DONE;
                 printf("Settings:\n PORT %u\n", client->settingContext.DSTPORT);
             }
@@ -159,77 +159,77 @@ int StartSettings(ClientSocket* client){
         printf("R_DONE\n\n\n");
         return 2;
     }
-    return SUCCES;
+    return SUCCESS;
 }
 
 int SettingsReply(ClientSocket* client){
     if(client->settingContext.stateResponse == R_REPLY_VER){
-        int error = SendOneBait(client, &client->settingContext.VER);
+        int error = SendOneByte(client, &client->settingContext.VER);
         if(error != 2){
             return error;
         }
         client->settingContext.stateResponse = R_REPLY_STATE;
-        return SUCCES;
+        return SUCCESS;
     }
     if(client->settingContext.stateResponse == R_REPLY_STATE){
-        int error = SendOneBait(client, &client->settingContext.returnStatus);
+        int error = SendOneByte(client, &client->settingContext.returnStatus);
         if(error != 2){
             return error;
         }
         client->settingContext.stateResponse = R_REPLY_RSV;
-        return SUCCES;
+        return SUCCESS;
     }
     if(client->settingContext.stateResponse == R_REPLY_RSV){
-        int error = SendOneBait(client, &client->settingContext.RSV);
+        int error = SendOneByte(client, &client->settingContext.RSV);
         if(error != 2){
             return error;
         }
         client->settingContext.stateResponse = R_REPLY_ADDR;
-        return SUCCES;
+        return SUCCESS;
     }
     if(client->settingContext.stateResponse == R_REPLY_ADDR){
-        if(client->settingContext.addr.StateReplyAddr == A_REPLAY_TYPE){
+        if(client->settingContext.addr.StateReplyAddr == A_REPLY_TYPE){
             uint8_t type = 0x01;
-            int error = SendOneBait(client, &type);
+            int error = SendOneByte(client, &type);
             if(error != 2){
                 return error;
             }
-            client->settingContext.addr.StateReplyAddr = A_REPLAY_IPv4;
-            return SUCCES;
+            client->settingContext.addr.StateReplyAddr = A_REPLY_IPv4;
+            return SUCCESS;
         }
-        if(client->settingContext.addr.StateReplyAddr == A_REPLAY_IPv4){
-            int sendBait = send(client->socket, client->settingContext.addr.ReplayIPv4 + client->settingContext.addr.lengthReplayIP, 
-                                    4-client->settingContext.addr.lengthReplayIP, 0);
-            if(sendBait < 0 && errno == EAGAIN){
-                return SUCCES;
+        if(client->settingContext.addr.StateReplyAddr == A_REPLY_IPv4){
+            int sendByte = send(client->socket, client->settingContext.addr.ReplyIPv4 + client->settingContext.addr.lengthReplyIP, 
+                                    4-client->settingContext.addr.lengthReplyIP, 0);
+            if(sendByte < 0 && errno == EAGAIN){
+                return SUCCESS;
             }
-            if(sendBait <= 0){
+            if(sendByte <= 0){
                 perror("send");
                 return ERROR;
             }
-            client->settingContext.addr.lengthReplayIP += sendBait;
-            if(client->settingContext.addr.lengthReplayIP == 4){
+            client->settingContext.addr.lengthReplyIP += sendByte;
+            if(client->settingContext.addr.lengthReplyIP == 4){
                 client->settingContext.addr.StateReplyAddr = A_RDONE;
             }
-            return SUCCES;
+            return SUCCESS;
         }
         if(client->settingContext.addr.StateReplyAddr == A_RDONE){
             client->settingContext.stateResponse = R_REPLY_PORT;
-            return SUCCES;
+            return SUCCESS;
         }
     }
     if(client->settingContext.stateResponse == R_REPLY_PORT){
-        int sendBait = send(client->socket, client->settingContext.connectPortBait + client->settingContext.sizeReplyPortBait, 
-                                2-client->settingContext.sizeReplyPortBait, 0);
-        if(sendBait < 0 && errno == EAGAIN){
-            return SUCCES;
+        int sendByte = send(client->socket, client->settingContext.connectPortByte + client->settingContext.sizeReplyPortByte, 
+                                2-client->settingContext.sizeReplyPortByte, 0);
+        if(sendByte < 0 && errno == EAGAIN){
+            return SUCCESS;
         }
-        if(sendBait <= 0){
+        if(sendByte <= 0){
             perror("send");
             return ERROR;
         }
-        client->settingContext.sizeReplyPortBait += sendBait;
-        if(client->settingContext.sizeReplyPortBait == 2){
+        client->settingContext.sizeReplyPortByte += sendByte;
+        if(client->settingContext.sizeReplyPortByte == 2){
             client->settingContext.stateResponse = R_RDONE;
         }
     }
@@ -238,5 +238,5 @@ int SettingsReply(ClientSocket* client){
         printf("НАСТРОЙКИ ОТПРАВЛЕНЫ \n\n");
         return 2;
     }
-    return SUCCES;
+    return SUCCESS;
 }
